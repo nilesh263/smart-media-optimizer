@@ -5,15 +5,17 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const NAV = [
-  { label: "Dashboard", href: "/dashboard",         icon: "🏠" },
-  { label: "Images",    href: "/dashboard/images",   icon: "🖼",  badge: "14" },
-  { label: "Videos",    href: "/dashboard/videos",   icon: "🎞" },
-  { label: "PDFs",      href: "/dashboard/pdfs",     icon: "📄" },
-  { label: "GIFs",      href: "/dashboard/gifs",     icon: "🎬" },
-  { label: "AI Tools",  href: "/dashboard/ai",       icon: "✨" },
-  { label: "Batch",     href: "/dashboard/batch",    icon: "📦" },
-  { label: "Analytics", href: "/dashboard/analytics",icon: "📊" },
-  { label: "Settings",  href: "/dashboard/settings", icon: "⚙️" },
+  { label: "Dashboard",  href: "/dashboard",           icon: "🏠" },
+  { label: "Images",     href: "/dashboard/upload",    icon: "🖼",  badge: "14" },
+  { label: "Videos",     href: "/dashboard/videos",    icon: "🎞" },
+  { label: "PDFs",       href: "/dashboard/pdfs",      icon: "📄" },
+  { label: "GIFs",       href: "/dashboard/gifs",      icon: "🎬" },
+  { label: "Converter",  href: "/dashboard/converter", icon: "🔄" },
+  { label: "Thumbnail",  href: "/dashboard/thumbnail", icon: "🖼️" },
+  { label: "Downloader", href: "/dashboard/downloader",icon: "⬇️" },
+  { label: "AI Tools",   href: "/dashboard/ai",        icon: "✨" },
+  { label: "Analytics",  href: "/dashboard/analytics", icon: "📊" },
+  { label: "Settings",   href: "/dashboard/settings",  icon: "⚙️" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -64,9 +66,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
           </div>
 
-          {/* Nav items */}
+          {/* Nav */}
           <nav style={{ flex: 1, padding: "12px 8px", overflowY: "auto", overflowX: "hidden" }}>
-            {NAV.map(item => {
+
+            {/* Main tools section */}
+            {!collapsed && <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.2)", textTransform: "uppercase", letterSpacing: 1, padding: "6px 12px 4px" }}>Tools</div>}
+
+            {NAV.slice(0, 6).map(item => {
+              const active = path === item.href || path.startsWith(item.href + "/");
+              return (
+                <Link key={item.href} href={item.href} className={`nav-item ${active ? "active" : ""}`}
+                  style={{ marginBottom: 2, justifyContent: collapsed ? "center" : "flex-start" }}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <span style={{ fontSize: 18, minWidth: 20, textAlign: "center" }}>{item.icon}</span>
+                  {!collapsed && <span style={{ flex: 1, whiteSpace: "nowrap" }}>{item.label}</span>}
+                  {!collapsed && item.badge && (
+                    <span style={{ background: "#6C63FF", color: "white", fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 10 }}>{item.badge}</span>
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* Utilities section */}
+            {!collapsed && <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.2)", textTransform: "uppercase", letterSpacing: 1, padding: "10px 12px 4px", marginTop: 4 }}>Utilities</div>}
+
+            {NAV.slice(6, 9).map(item => {
               const active = path === item.href;
               return (
                 <Link key={item.href} href={item.href} className={`nav-item ${active ? "active" : ""}`}
@@ -74,12 +99,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   title={collapsed ? item.label : undefined}
                 >
                   <span style={{ fontSize: 18, minWidth: 20, textAlign: "center" }}>{item.icon}</span>
-                  {!collapsed && (
-                    <span style={{ flex: 1, whiteSpace: "nowrap" }}>{item.label}</span>
+                  {!collapsed && <span style={{ flex: 1, whiteSpace: "nowrap" }}>{item.label}</span>}
+                  {item.href === "/dashboard/downloader" && !collapsed && (
+                    <span style={{ background: "rgba(0,229,160,.2)", color: "#00E5A0", fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 8 }}>NEW</span>
                   )}
-                  {!collapsed && item.badge && (
-                    <span style={{ background: "#6C63FF", color: "white", fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 10 }}>{item.badge}</span>
-                  )}
+                </Link>
+              );
+            })}
+
+            {/* Settings */}
+            {!collapsed && <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.2)", textTransform: "uppercase", letterSpacing: 1, padding: "10px 12px 4px", marginTop: 4 }}>System</div>}
+
+            {NAV.slice(9).map(item => {
+              const active = path === item.href;
+              return (
+                <Link key={item.href} href={item.href} className={`nav-item ${active ? "active" : ""}`}
+                  style={{ marginBottom: 2, justifyContent: collapsed ? "center" : "flex-start" }}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <span style={{ fontSize: 18, minWidth: 20, textAlign: "center" }}>{item.icon}</span>
+                  {!collapsed && <span style={{ flex: 1, whiteSpace: "nowrap" }}>{item.label}</span>}
                 </Link>
               );
             })}
@@ -97,7 +136,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
 
           {/* Collapse button */}
-          <button onClick={() => setCollapsed(v => !v)} style={{ height: 44, background: "none", border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }}
+          <button onClick={() => setCollapsed(v => !v)}
+            style={{ height: 44, background: "none", border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }}
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
             onMouseLeave={e => (e.currentTarget.style.background = "none")}
           >
