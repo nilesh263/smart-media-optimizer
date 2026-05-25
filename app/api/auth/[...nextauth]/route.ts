@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
-// Simple in-memory user store (replace with database later)
 const users: { id: string; name: string; email: string; password: string }[] = [];
 
 const handler = NextAuth({
@@ -23,21 +22,13 @@ const handler = NextAuth({
         const isSignup = credentials.isSignup === "true";
 
         if (isSignup) {
-          // Sign up flow
           const exists = users.find(u => u.email === email);
           if (exists) throw new Error("Email already registered");
-
-          const hashed = await bcrypt.hash(password, 10);
-          const newUser = {
-            id:       Date.now().toString(),
-            name:     credentials.name || email.split("@")[0],
-            email,
-            password: hashed,
-          };
+          const hashed  = await bcrypt.hash(password, 10);
+          const newUser = { id: Date.now().toString(), name: credentials.name || email.split("@")[0], email, password: hashed };
           users.push(newUser);
           return { id: newUser.id, name: newUser.name, email: newUser.email };
         } else {
-          // Login flow
           const user = users.find(u => u.email === email);
           if (!user) throw new Error("No account found with this email");
           const valid = await bcrypt.compare(password, user.password);
@@ -47,24 +38,17 @@ const handler = NextAuth({
       },
     }),
   ],
-  pages: {
-    signIn: "/login",
-  },
-  session: {
-    strategy: "jwt",
-  },
+  pages: { signIn: "/login" },
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id   = user.id;
-        token.name = user.name;
-      }
+      if (user) { token.id = user.id; token.name = user.name; }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id   = token.id as string;
-        session.user.name = token.name as string;
+      if (token && session.user) {
+        (session.user as any).id   = token.id as string;
+        session.user.name          = token.name as string;
       }
       return session;
     },
