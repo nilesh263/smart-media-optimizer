@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthProvider from "./auth-provider";
 
 export const metadata: Metadata = {
-  title: "Smart Media Optimizer AI",
-  description: "AI-powered compression for images, videos, PDFs and GIFs",
+  title: "MediaOptimizer AI — Compress Without Quality Loss",
+  description: "AI-powered media optimization for images, videos, PDFs and GIFs",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, padding: 0, background: "#08090F" }}>
-        {children}
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
