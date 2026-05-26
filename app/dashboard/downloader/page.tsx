@@ -12,7 +12,7 @@ interface VideoInfo {
   formats:   { id: string; label: string; desc: string }[];
 }
 
-const API = "http://localhost:4000";
+const API = "${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}";
 
 function formatDuration(s: number) {
   if (!s) return "0:00";

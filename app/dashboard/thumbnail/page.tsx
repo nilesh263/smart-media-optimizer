@@ -37,7 +37,7 @@ function getThumbnails(videoId: string): ThumbResult[] {
 
 function downloadThumbnail(url: string, filename: string) {
   // Use backend proxy to bypass YouTube CORS restrictions
-  const proxyUrl = `http://localhost:4000/api/proxy/thumbnail?url=${encodeURIComponent(url)}`;
+  const proxyUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proxy/thumbnail?url=${encodeURIComponent(url)}`;
   const a = document.createElement("a");
   a.href = proxyUrl;
   a.download = filename;

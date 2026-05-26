@@ -20,7 +20,7 @@ interface GifFile {
 type GifTool    = "compress" | "resize" | "video2gif";
 type GifQuality = "high" | "medium" | "small";
 
-const API = "http://localhost:4000";
+const API = "${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}";
 
 function formatBytes(b: number) {
   if (!b) return "0 B";

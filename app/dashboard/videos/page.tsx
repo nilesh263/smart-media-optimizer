@@ -64,7 +64,7 @@ async function getVideoThumbnail(file: File): Promise<{ thumbnail: string; durat
   });
 }
 
-const API = "http://localhost:4000";
+const API = "${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}";
 
 const QUALITIES: { id: Quality; label: string; desc: string; crf: string; saving: string; color: string }[] = [
   { id:"high",   label:"💎 High Quality",    desc:"CRF 18 — near lossless, maximum fidelity",   crf:"CRF 18", saving:"20-40% smaller",  color:"#00D4FF" },
