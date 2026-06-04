@@ -9,6 +9,7 @@ interface GifFile {
   originalSize: number;
   file:         File;
   status:       "ready" | "processing" | "done" | "error";
+  progress:     number;
   outputSize?:  number;
   savings?:     number;
   downloadUrl?: string;
@@ -71,6 +72,7 @@ export default function GIFPage() {
       id: crypto.randomUUID(), name: f.name,
       originalSize: f.size, file: f,
       status: "ready" as const,
+      progress: 0,
       preview: URL.createObjectURL(f),
     }))]);
   }, [tool]);
@@ -85,7 +87,18 @@ export default function GIFPage() {
     setRunning(true);
 
     for (const item of ready) {
-      setFiles(prev => prev.map(f => f.id===item.id ? {...f, status:"processing"} : f));
+      setFiles(prev => prev.map(f => f.id===item.id ? {...f, status:"processing", progress:10} : f));
+
+      // Simulate progress while FFmpeg processes (no real % is streamed from the server)
+      const progressInterval = setInterval(() => {
+        setFiles(prev => prev.map(f => {
+          if (f.id === item.id && f.status === "processing" && f.progress < 90) {
+            return {...f, progress: Math.min(90, f.progress + Math.random() * 6 + 2)};
+          }
+          return f;
+        }));
+      }, 800);
+
       try {
         const formData = new FormData();
         formData.append("file", item.file);
@@ -105,11 +118,12 @@ export default function GIFPage() {
         }
 
         const res  = await fetch(API + endpoint, { method:"POST", body:formData });
+        clearInterval(progressInterval);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed");
 
         setFiles(prev => prev.map(f => f.id===item.id ? {
-          ...f, status:"done",
+          ...f, status:"done", progress:100,
           outputSize:      data.compressedSize || 0,
           savings:         data.savings        || 0,
           downloadUrl:     data.downloadUrl,
@@ -117,8 +131,9 @@ export default function GIFPage() {
         } : f));
 
       } catch(err) {
+        clearInterval(progressInterval);
         setFiles(prev => prev.map(f => f.id===item.id ? {
-          ...f, status:"error",
+          ...f, status:"error", progress:0,
           error: err instanceof Error ? err.message : "Failed",
         } : f));
       }
@@ -290,6 +305,7 @@ export default function GIFPage() {
                       {f.status==="processing" && (
                         <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,.65)", gap:8 }}>
                           <div style={{ width:36, height:36, border:"3px solid rgba(245,166,35,.3)", borderTop:"3px solid #F5A623", borderRadius:"50%", animation:"spin .8s linear infinite" }}/>
+                          <div style={{ fontSize:13, color:"#F5A623", fontWeight:700 }}>{Math.round(f.progress)}%</div>
                           <div style={{ fontSize:11, color:"#F5A623" }}>FFmpeg processing…</div>
                         </div>
                       )}
@@ -304,7 +320,17 @@ export default function GIFPage() {
                         {f.status==="done" && f.outputSize && <span style={{ color:"#00E5A0", fontWeight:700 }}>{formatBytes(f.outputSize)}</span>}
                       </div>
                       {f.status==="ready"      && <div style={{ textAlign:"center", fontSize:11, color:"rgba(255,255,255,.3)", padding:"6px", border:"1px dashed rgba(255,255,255,.1)", borderRadius:8 }}>Ready</div>}
-                      {f.status==="processing" && <div style={{ textAlign:"center", fontSize:12, color:"#F5A623" }}>Processing…</div>}
+                      {f.status==="processing" && (
+                        <div>
+                          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"#F5A623", marginBottom:6 }}>
+                            <span>Processing…</span>
+                            <span style={{ fontWeight:700 }}>{Math.round(f.progress)}%</span>
+                          </div>
+                          <div style={{ height:6, background:"rgba(255,255,255,.1)", borderRadius:4, overflow:"hidden" }}>
+                            <div style={{ height:"100%", width:`${f.progress}%`, background:"linear-gradient(90deg,#F5A623,#FF6B35)", transition:"width .5s" }}/>
+                          </div>
+                        </div>
+                      )}
                       {f.status==="done" && f.downloadUrl && f.downloadFilename && (
                         <button className="db"
                           onClick={() => downloadFile(f.downloadUrl!, f.downloadFilename!)}
