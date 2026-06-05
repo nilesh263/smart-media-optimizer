@@ -5,7 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 
-const NAV = [
+type NavItem = { label:string; href:string; icon:string; badge?:string; soon?:boolean };
+
+const NAV: NavItem[] = [
   { label:"Dashboard",   href:"/dashboard",            icon:"🏠" },
   { label:"Images",      href:"/dashboard/upload",     icon:"🖼",  badge:"14" },
   { label:"Videos",      href:"/dashboard/videos",     icon:"🎞" },
@@ -14,9 +16,8 @@ const NAV = [
   { label:"Converter",   href:"/dashboard/converter",  icon:"🔄" },
   { label:"Thumbnail",   href:"/dashboard/thumbnail",  icon:"🖼️" },
   { label:"Downloader",  href:"/dashboard/downloader", icon:"⬇️" },
-  { label:"AI Tools",    href:"/dashboard/ai",         icon:"✨" },
-  { label:"Analytics",   href:"/dashboard/analytics",  icon:"📊" },
-  { label:"Settings",    href:"/dashboard/settings",   icon:"⚙️" },
+  { label:"AI Tools",    href:"/dashboard/ai",         icon:"✨", soon:true },
+  // Analytics & Settings hidden for now — re-add here to restore them.
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -83,6 +84,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {!collapsed && <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,.2)", textTransform:"uppercase", letterSpacing:1, padding:"10px 12px 4px", marginTop:4 }}>Utilities</div>}
             {NAV.slice(6,9).map(item => {
+              // "Coming soon" items are shown disabled (not links)
+              if (item.soon) {
+                return (
+                  <div key={item.href} className="nav-item"
+                    style={{ marginBottom:2, justifyContent:collapsed?"center":"flex-start", cursor:"not-allowed", opacity:.45 }}
+                    title={collapsed?`${item.label} — coming soon`:"Coming soon"}>
+                    <span style={{ fontSize:18, minWidth:20, textAlign:"center" }}>{item.icon}</span>
+                    {!collapsed && <span style={{ flex:1, whiteSpace:"nowrap" }}>{item.label}</span>}
+                    {!collapsed && <span style={{ background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.5)", fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:8, textTransform:"uppercase", letterSpacing:.5 }}>Soon</span>}
+                  </div>
+                );
+              }
               const active = path === item.href;
               return (
                 <Link key={item.href} href={item.href} className={`nav-item ${active?"active":""}`}
@@ -91,19 +104,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span style={{ fontSize:18, minWidth:20, textAlign:"center" }}>{item.icon}</span>
                   {!collapsed && <span style={{ flex:1, whiteSpace:"nowrap" }}>{item.label}</span>}
                   {item.href==="/dashboard/downloader" && !collapsed && <span style={{ background:"rgba(0,229,160,.2)", color:"#00E5A0", fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:8 }}>NEW</span>}
-                </Link>
-              );
-            })}
-
-            {!collapsed && <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,.2)", textTransform:"uppercase", letterSpacing:1, padding:"10px 12px 4px", marginTop:4 }}>System</div>}
-            {NAV.slice(9).map(item => {
-              const active = path === item.href;
-              return (
-                <Link key={item.href} href={item.href} className={`nav-item ${active?"active":""}`}
-                  style={{ marginBottom:2, justifyContent:collapsed?"center":"flex-start" }}
-                  title={collapsed?item.label:undefined}>
-                  <span style={{ fontSize:18, minWidth:20, textAlign:"center" }}>{item.icon}</span>
-                  {!collapsed && <span style={{ flex:1, whiteSpace:"nowrap" }}>{item.label}</span>}
                 </Link>
               );
             })}
