@@ -34,6 +34,26 @@ function downloadBlob(blob: Blob, filename: string) {
   document.body.removeChild(a);
 }
 
+// ── Load JSZip (for bundling many output files) ──────────
+async function loadJSZip(): Promise<any> {
+  if ((window as any).JSZip) return (window as any).JSZip;
+  await new Promise<void>((res, rej) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+    s.onload = () => res(); s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  return (window as any).JSZip;
+}
+
+async function downloadResultsAsZip(results: { name: string; blob: Blob }[], zipName: string) {
+  const JSZip = await loadJSZip();
+  const zip = new JSZip();
+  results.forEach(r => zip.file(r.name, r.blob));
+  const blob = await zip.generateAsync({ type: "blob" });
+  downloadBlob(blob, zipName);
+}
+
 // ── Load PDF-lib ──────────────────────────────────────────
 async function loadPDFLib() {
   if ((window as any).PDFLib) return (window as any).PDFLib;
@@ -145,6 +165,47 @@ async function convertImageFormat(file: File, fmt: string, quality: number): Pro
   );
 }
 
+// ── Animated GIF → one image per frame ────────────────────
+// A plain <img> only renders a GIF's first frame, so we decode every frame
+// natively with ImageDecoder (WebCodecs) and export each one separately.
+async function gifToFrames(
+  file: File, fmt: string, quality: number
+): Promise<{ name: string; blob: Blob; url: string; size: number }[]> {
+  const ID = (window as any).ImageDecoder;
+  const buf = await file.arrayBuffer();
+  const dec = new ID({ data: buf, type: "image/gif" });
+  await dec.tracks.ready;
+  const track = dec.tracks.selectedTrack;
+  let count = track && track.frameCount ? track.frameCount : 1;
+
+  const base = file.name.replace(/\.[^.]+$/, "");
+  const mime = fmt === "jpg" ? "image/jpeg" : fmt === "png" ? "image/png" : `image/${fmt}`;
+  const results: { name: string; blob: Blob; url: string; size: number }[] = [];
+
+  for (let i = 0; i < count; i++) {
+    let frame: any;
+    try { frame = (await dec.decode({ frameIndex: i })).image; }
+    catch { break; } // ran past the real frame count
+    const c = document.createElement("canvas");
+    c.width  = frame.displayWidth  || frame.codedWidth;
+    c.height = frame.displayHeight || frame.codedHeight;
+    const ctx = c.getContext("2d")!;
+    // JPG/BMP have no alpha — flatten transparency onto white
+    if (fmt === "jpg" || fmt === "bmp") { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); }
+    ctx.drawImage(frame, 0, 0);
+    frame.close();
+    const blob = await new Promise<Blob>((res, rej) =>
+      c.toBlob(b => b ? res(b) : rej(new Error("Encode failed")), mime, quality / 100)
+    );
+    const num = String(i + 1).padStart(3, "0");
+    results.push({ name: `${base}-frame-${num}.${fmt}`, blob, url: URL.createObjectURL(blob), size: blob.size });
+  }
+
+  dec.close();
+  if (!results.length) throw new Error("Could not decode GIF frames");
+  return results;
+}
+
 // ── Mode definitions ──────────────────────────────────────
 const MODES: {
   id: ConvertMode; icon: string; label: string; from: string; to: string;
@@ -229,8 +290,14 @@ export default function ConverterPage() {
             img2pdf:"pdf", pdf2img:"jpg",
           };
           const fmt  = fmtMap[mode];
-          const blob = await convertImageFormat(item.file, fmt, quality);
-          results = [{ name:`${base}.${fmt}`, blob, url:URL.createObjectURL(blob), size:blob.size }];
+          const isGif = item.file.type === "image/gif" || /\.gif$/i.test(item.name);
+          if (isGif && fmt !== "gif" && "ImageDecoder" in window) {
+            // GIF → static format: export every frame as its own image
+            results = await gifToFrames(item.file, fmt, quality);
+          } else {
+            const blob = await convertImageFormat(item.file, fmt, quality);
+            results = [{ name:`${base}.${fmt}`, blob, url:URL.createObjectURL(blob), size:blob.size }];
+          }
         }
 
         setFiles(prev => prev.map(f => f.id===item.id ? {...f, status:"done", results} : f));
@@ -437,9 +504,9 @@ export default function ConverterPage() {
                       )}
                       {f.status==="done" && f.results && f.results.length>1 && (
                         <button className="db"
-                          onClick={() => f.results!.forEach(r => downloadBlob(r.blob, r.name))}
+                          onClick={() => downloadResultsAsZip(f.results!, `${f.name.replace(/\.[^.]+$/,"")}-${mode==="pdf2img"?"pages":"frames"}.zip`)}
                           style={{ background:`linear-gradient(135deg,${currentMode.color},${currentMode.color}BB)`, color:"white", borderRadius:10, padding:"8px 18px", fontSize:13, fontWeight:700 }}>
-                          ⬇️ Download All ({f.results.length})
+                          ⬇️ Download ZIP ({f.results.length})
                         </button>
                       )}
                       <button onClick={() => setFiles(prev => prev.filter(x => x.id!==f.id))}
