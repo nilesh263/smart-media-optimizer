@@ -1,8 +1,10 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 
-const users: { id: string; name: string; email: string; password: string }[] = [];
+// Users are stored on the always-on backend (Railway), not in memory here —
+// an in-memory array does not persist across Vercel's stateless serverless
+// invocations, which made signed-up accounts vanish on the next request.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 const handler = NextAuth({
   providers: [
@@ -17,24 +19,22 @@ const handler = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email    = credentials.email.toLowerCase();
-        const password = credentials.password;
         const isSignup = credentials.isSignup === "true";
+        const endpoint = isSignup ? "/api/auth/register" : "/api/auth/login";
 
-        if (isSignup) {
-          const exists = users.find(u => u.email === email);
-          if (exists) throw new Error("Email already registered");
-          const hashed  = await bcrypt.hash(password, 10);
-          const newUser = { id: Date.now().toString(), name: credentials.name || email.split("@")[0], email, password: hashed };
-          users.push(newUser);
-          return { id: newUser.id, name: newUser.name, email: newUser.email };
-        } else {
-          const user = users.find(u => u.email === email);
-          if (!user) throw new Error("No account found with this email");
-          const valid = await bcrypt.compare(password, user.password);
-          if (!valid) throw new Error("Incorrect password");
-          return { id: user.id, name: user.name, email: user.email };
-        }
+        const res = await fetch(API_URL + endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name:     credentials.name,
+            email:    credentials.email,
+            password: credentials.password,
+          }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Authentication failed");
+        return { id: data.id, name: data.name, email: data.email };
       },
     }),
   ],
