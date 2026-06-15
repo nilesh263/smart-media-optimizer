@@ -102,8 +102,8 @@ export default function LandingPage() {
               {["Tools","Pricing","API","Blog"].map(l=><a key={l} href={`#${l.toLowerCase()}`} className="nav-a">{l}</a>)}
             </nav>
             <div style={{display:"flex",alignItems:"center",gap:16}}>
-              <a href="#" className="nav-a">Sign in</a>
-              <a href="#" style={{background:"linear-gradient(135deg,#6C63FF,#8B83FF)",color:"white",borderRadius:10,padding:"8px 20px",fontSize:14,fontWeight:600,textDecoration:"none",boxShadow:"0 4px 20px rgba(108,99,255,.35)"}}>Start Free</a>
+              <a href="/login" className="nav-a">Sign in</a>
+              <a href="/dashboard" style={{background:"linear-gradient(135deg,#6C63FF,#8B83FF)",color:"white",borderRadius:10,padding:"8px 20px",fontSize:14,fontWeight:600,textDecoration:"none",boxShadow:"0 4px 20px rgba(108,99,255,.35)"}}>Start Free</a>
             </div>
           </div>
         </header>
@@ -138,7 +138,7 @@ export default function LandingPage() {
 
             {/* buttons */}
             <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:.5,delay:.32}} style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap",marginBottom:64}}>
-              <a href="#" style={{background:"linear-gradient(135deg,#6C63FF,#8B83FF)",color:"white",borderRadius:12,padding:"15px 34px",fontSize:16,fontWeight:600,textDecoration:"none",boxShadow:"0 8px 32px rgba(108,99,255,.4)"}}>Start optimizing free</a>
+              <a href="/dashboard" style={{background:"linear-gradient(135deg,#6C63FF,#8B83FF)",color:"white",borderRadius:12,padding:"15px 34px",fontSize:16,fontWeight:600,textDecoration:"none",boxShadow:"0 8px 32px rgba(108,99,255,.4)"}}>Start optimizing free</a>
               <a href="#tools" style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,255,255,.1)",color:"rgba(255,255,255,.8)",borderRadius:12,padding:"15px 34px",fontSize:16,fontWeight:600,textDecoration:"none"}}>See all tools →</a>
             </motion.div>
 
@@ -258,7 +258,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <a href="#" className="plan-btn" style={p.highlight?{background:"linear-gradient(135deg,#6C63FF,#8B83FF)",color:"white",boxShadow:"0 4px 20px rgba(108,99,255,.3)"}:{border:"1px solid rgba(255,255,255,.12)",color:"rgba(255,255,255,.7)"}}>{p.cta}</a>
+                  <a href="/dashboard" className="plan-btn" style={p.highlight?{background:"linear-gradient(135deg,#6C63FF,#8B83FF)",color:"white",boxShadow:"0 4px 20px rgba(108,99,255,.3)"}:{border:"1px solid rgba(255,255,255,.12)",color:"rgba(255,255,255,.7)"}}>{p.cta}</a>
                 </motion.div>
               ))}
             </div>
@@ -274,7 +274,7 @@ export default function LandingPage() {
               <span style={{background:"linear-gradient(135deg,#6C63FF,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>bandwidth?</span>
             </h2>
             <p style={{fontSize:17,color:"rgba(255,255,255,.4)",marginBottom:36}}>Join 50,000+ developers and teams already shipping faster.</p>
-            <a href="#" style={{display:"inline-flex",alignItems:"center",gap:8,background:"linear-gradient(135deg,#6C63FF,#8B83FF)",color:"white",borderRadius:14,padding:"16px 40px",fontSize:16,fontWeight:700,textDecoration:"none",boxShadow:"0 8px 40px rgba(108,99,255,.4)"}}>Start optimizing free →</a>
+            <a href="/dashboard" style={{display:"inline-flex",alignItems:"center",gap:8,background:"linear-gradient(135deg,#6C63FF,#8B83FF)",color:"white",borderRadius:14,padding:"16px 40px",fontSize:16,fontWeight:700,textDecoration:"none",boxShadow:"0 8px 40px rgba(108,99,255,.4)"}}>Start optimizing free →</a>
             <div style={{marginTop:14,fontSize:13,color:"rgba(255,255,255,.25)"}}>No credit card required · 50 free files/month</div>
           </motion.div>
         </section>
