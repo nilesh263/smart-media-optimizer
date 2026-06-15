@@ -21,8 +21,9 @@ const NAV: NavItem[] = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [collapsed,   setCollapsed]   = useState(false);
-  const [showUserMenu,setShowUserMenu]= useState(false);
+  const [collapsed,     setCollapsed]     = useState(false);
+  const [showUserMenu,  setShowUserMenu]  = useState(false);
+  const [showHeaderMenu,setShowHeaderMenu]= useState(false);
   const path   = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
@@ -155,19 +156,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* MAIN */}
         <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
           <header style={{ height:64, borderBottom:"1px solid rgba(255,255,255,.06)", display:"flex", alignItems:"center", padding:"0 24px", gap:16, flexShrink:0 }}>
-            <div style={{ flex:1, display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.07)", borderRadius:10, padding:"8px 14px", maxWidth:280 }}>
-              <span style={{ fontSize:14, color:"rgba(255,255,255,.25)" }}>🔍</span>
-              <input type="text" placeholder="Search files, jobs…" style={{ background:"none", border:"none", outline:"none", fontSize:13, color:"rgba(255,255,255,.6)", width:"100%" }}/>
-            </div>
-            <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:12 }}>
-              <div style={{ position:"relative" }}>
-                <div style={{ width:34, height:34, borderRadius:10, background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:15 }}>🔔</div>
-                <div style={{ position:"absolute", top:-4, right:-4, width:16, height:16, background:"#FF4B8A", borderRadius:"50%", fontSize:9, fontWeight:700, color:"white", display:"flex", alignItems:"center", justifyContent:"center" }}>3</div>
-              </div>
+            <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:12, position:"relative" }}>
               {session ? (
-                <div style={{ width:34, height:34, borderRadius:"50%", background:"linear-gradient(135deg,#6C63FF,#8B83FF)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"white", cursor:"pointer" }}>
-                  {userInitials}
-                </div>
+                <>
+                  <button onClick={() => setShowHeaderMenu(v => !v)}
+                    style={{ width:34, height:34, borderRadius:"50%", background:"linear-gradient(135deg,#6C63FF,#8B83FF)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"white", cursor:"pointer", border:"none" }}>
+                    {userInitials}
+                  </button>
+                  {showHeaderMenu && (
+                    <>
+                      <div onClick={() => setShowHeaderMenu(false)} style={{ position:"fixed", inset:0, zIndex:90 }}/>
+                      <div style={{ position:"absolute", top:46, right:0, width:210, background:"#0F1219", border:"1px solid rgba(255,255,255,.1)", borderRadius:12, padding:8, zIndex:100, boxShadow:"0 8px 28px rgba(0,0,0,.45)" }}>
+                        <div style={{ padding:"8px 12px 10px", borderBottom:"1px solid rgba(255,255,255,.06)", marginBottom:6 }}>
+                          <div style={{ fontSize:13, fontWeight:600, color:"white", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{userName}</div>
+                          <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{userEmail || "Guest user"}</div>
+                        </div>
+                        <button className="menu-item" onClick={() => signOut({ callbackUrl:"/login" })}
+                          style={{ width:"100%", background:"none", border:"none", textAlign:"left" }}>
+                          🚪 Sign Out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
               ) : (
                 <Link href="/login" style={{ background:"linear-gradient(135deg,#6C63FF,#8B83FF)", color:"white", borderRadius:10, padding:"7px 16px", fontSize:13, fontWeight:700, textDecoration:"none" }}>
                   Sign In
