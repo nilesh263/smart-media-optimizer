@@ -5,8 +5,10 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function LoginPage() {
-  const [mode,            setMode]           = useState<"login"|"signup">("login");
+  const [mode,            setMode]           = useState<"login"|"signup"|"reset">("login");
   const [name,            setName]           = useState("");
   const [email,           setEmail]          = useState("");
   const [password,        setPassword]       = useState("");
@@ -21,6 +23,29 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(""); setSuccess("");
+
+    // Forgot password — set a new password directly (no email verification)
+    if (mode === "reset") {
+      if (password.length < 6)          return setError("Password must be at least 6 characters");
+      if (password !== confirmPassword) return setError("Passwords do not match");
+      setLoading(true);
+      try {
+        const res  = await fetch(API + "/api/auth/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) setError(data.error || "Reset failed");
+        else {
+          setMode("login");
+          setPassword(""); setConfirmPassword("");
+          setSuccess("Password updated! Please sign in.");
+        }
+      } catch { setError("Something went wrong. Please try again."); }
+      setLoading(false);
+      return;
+    }
 
     if (mode === "signup") {
       if (!name.trim())               return setError("Please enter your full name");
@@ -96,7 +121,7 @@ export default function LoginPage() {
               MediaOptimizer <span style={{ color:"#6C63FF" }}>AI</span>
             </h1>
             <p style={{ fontSize:13, color:"rgba(255,255,255,.4)", marginTop:4 }}>
-              {mode==="login"?"Welcome back!":"Create your free account"}
+              {mode==="login"?"Welcome back!":mode==="reset"?"Reset your password":"Create your free account"}
             </p>
           </div>
 
@@ -155,11 +180,11 @@ export default function LoginPage() {
 
               {/* Password */}
               <div>
-                <label style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,.5)", display:"block", marginBottom:6 }}>Password</label>
+                <label style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,.5)", display:"block", marginBottom:6 }}>{mode==="reset"?"New Password":"Password"}</label>
                 <div style={{ position:"relative" }}>
                   <input className="input-field" type={showPass?"text":"password"} value={password}
                     onChange={e=>setPassword(e.target.value)}
-                    placeholder={mode==="signup"?"Min 6 characters":"Enter your password"}
+                    placeholder={mode==="login"?"Enter your password":"Min 6 characters"}
                     required
                     style={{ width:"100%", background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.12)", borderRadius:10, padding:"11px 40px 11px 14px", color:"white", fontSize:14, fontFamily:"inherit" }}/>
                   <button type="button" className="eye-btn" onClick={()=>setShowPass(v=>!v)}>
@@ -167,7 +192,7 @@ export default function LoginPage() {
                   </button>
                 </div>
                 {/* Password strength */}
-                {mode==="signup" && password && (
+                {(mode==="signup"||mode==="reset") && password && (
                   <div style={{ marginTop:8 }}>
                     <div style={{ display:"flex", gap:4, marginBottom:4 }}>
                       {[1,2,3,4,5].map(i=>(
@@ -179,8 +204,17 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {/* Confirm Password — signup only */}
-              {mode==="signup" && (
+              {/* Forgot password — login mode only */}
+              {mode==="login" && (
+                <button type="button"
+                  onClick={() => { setMode("reset"); setError(""); setSuccess(""); setPassword(""); setConfirmPassword(""); }}
+                  style={{ alignSelf:"flex-end", background:"none", border:"none", color:"rgba(108,99,255,.85)", fontSize:12, fontWeight:600, cursor:"pointer", marginTop:-6 }}>
+                  Forgot password?
+                </button>
+              )}
+
+              {/* Confirm Password — signup & reset */}
+              {(mode==="signup"||mode==="reset") && (
                 <div>
                   <label style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,.5)", display:"block", marginBottom:6 }}>Confirm Password</label>
                   <div style={{ position:"relative" }}>
@@ -211,9 +245,18 @@ export default function LoginPage() {
                       <span style={{ width:16, height:16, border:"2px solid rgba(255,255,255,.4)", borderTop:"2px solid white", borderRadius:"50%", display:"inline-block", animation:"spin .7s linear infinite" }}/>
                       Please wait…
                     </span>
-                  : mode==="login"?"Sign In →":"Create Account →"
+                  : mode==="login"?"Sign In →":mode==="reset"?"Reset Password →":"Create Account →"
                 }
               </button>
+
+              {/* Back to sign in — reset mode */}
+              {mode==="reset" && (
+                <button type="button"
+                  onClick={() => { setMode("login"); setError(""); setSuccess(""); setPassword(""); setConfirmPassword(""); }}
+                  style={{ background:"none", border:"none", color:"rgba(255,255,255,.4)", fontSize:13, cursor:"pointer", textAlign:"center" }}>
+                  ← Back to Sign In
+                </button>
+              )}
 
               {/* Divider */}
               <div style={{ display:"flex", alignItems:"center", gap:12, margin:"4px 0" }}>
