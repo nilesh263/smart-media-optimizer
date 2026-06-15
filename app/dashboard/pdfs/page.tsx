@@ -68,38 +68,37 @@ async function getPDFPageCount(file: File): Promise<number> {
   } catch { return 0; }
 }
 
-// Best compression settings — visually identical, real size reduction
+// Compression presets — ordered best-quality → most-compression, themed like the Video tab
 const MODES: Record<QualityMode, {
-  label: string; badge: string; color: string;
-  desc: string; detail: string;
+  label: string; desc: string; pill: string; saving: string; color: string;
   scale: number; imgQuality: number;
 }> = {
+  ultra: {
+    label:      "💎 Ultra Quality",
+    desc:       "Highest fidelity — imperceptible difference",
+    pill:       "98% quality",
+    saving:     "10-30% smaller",
+    color:      "#00D4FF",
+    scale:      2.0,
+    imgQuality: 0.98,
+  },
   recommended: {
     label:      "⭐ Recommended",
-    badge:      "Best balance",
+    desc:       "Best balance — visually identical to original",
+    pill:       "95% quality",
+    saving:     "30-60% smaller",
     color:      "#00E5A0",
-    desc:       "Visually identical to original",
-    detail:     "95% quality · 1.8× render scale · 30-60% smaller",
     scale:      1.8,
     imgQuality: 0.95,
   },
   maximum: {
     label:      "🚀 Maximum Compression",
-    badge:      "Smallest file",
-    color:      "#6C63FF",
-    desc:       "Near lossless — very hard to tell apart",
-    detail:     "88% quality · 1.5× render scale · 50-75% smaller",
+    desc:       "Near lossless — smallest file",
+    pill:       "88% quality",
+    saving:     "50-75% smaller",
+    color:      "#FF6B35",
     scale:      1.5,
     imgQuality: 0.88,
-  },
-  ultra: {
-    label:      "💎 Ultra Quality",
-    badge:      "Best quality",
-    color:      "#00D4FF",
-    desc:       "Highest fidelity — imperceptible difference",
-    detail:     "98% quality · 2× render scale · 10-30% smaller",
-    scale:      2.0,
-    imgQuality: 0.98,
   },
 };
 
@@ -302,12 +301,12 @@ export default function PDFPage() {
                   {mode===key && (
                     <div style={{ position:"absolute", top:10, right:10, width:8, height:8, borderRadius:"50%", background:val.color }}/>
                   )}
-                  <div style={{ fontSize:15, fontWeight:700, marginBottom:4 }}>{val.label}</div>
-                  <div style={{ fontSize:11, color:mode===key?val.color:"rgba(255,255,255,.5)", fontWeight:600, marginBottom:6 }}>
-                    {val.badge}
+                  <div style={{ fontSize:14, fontWeight:700, marginBottom:4 }}>{val.label}</div>
+                  <div style={{ fontSize:12, color:"rgba(255,255,255,.5)", marginBottom:8 }}>{val.desc}</div>
+                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                    <span style={{ fontSize:11, fontWeight:700, color:val.color, background:`${val.color}18`, padding:"2px 8px", borderRadius:6 }}>{val.pill}</span>
+                    <span style={{ fontSize:11, color:"rgba(255,255,255,.4)" }}>{val.saving}</span>
                   </div>
-                  <div style={{ fontSize:12, color:"rgba(255,255,255,.5)", marginBottom:4 }}>{val.desc}</div>
-                  <div style={{ fontSize:10, color:"rgba(255,255,255,.3)", lineHeight:1.4 }}>{val.detail}</div>
                 </button>
               ))}
             </div>
