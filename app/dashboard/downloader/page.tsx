@@ -23,13 +23,18 @@ function formatDuration(s: number) {
   return `${m}:${sec.toString().padStart(2,"0")}`;
 }
 
-function downloadFile(url: string, filename: string) {
+async function downloadFile(url: string, filename: string) {
+  // Fetch as a blob (the layout's fetch patch adds the ngrok header) so the
+  // file downloads directly instead of navigating to the tunnel's warning page.
+  const res  = await fetch(url);
+  const blob = await res.blob();
   const a = document.createElement("a");
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
 const SUPPORTED = [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -24,6 +24,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed,     setCollapsed]     = useState(false);
   const [showUserMenu,  setShowUserMenu]  = useState(false);
   const [showHeaderMenu,setShowHeaderMenu]= useState(false);
+
+  // Backend is reached through an ngrok tunnel, whose free tier shows a browser
+  // "warning" HTML page unless the request carries this header. Patch fetch once
+  // so every API/download call to the backend skips that interstitial.
+  useEffect(() => {
+    const API = process.env.NEXT_PUBLIC_API_URL || "";
+    if (typeof window === "undefined" || !API || (window as any).__apiFetchPatched) return;
+    (window as any).__apiFetchPatched = true;
+    const orig = window.fetch.bind(window);
+    window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      try {
+        const u = typeof input === "string" ? input : (input as any).url || String(input);
+        if (u && u.startsWith(API)) {
+          init = { ...(init || {}) };
+          init.headers = { ...(init.headers as any), "ngrok-skip-browser-warning": "true" };
+        }
+      } catch (e) {}
+      return orig(input, init);
+    };
+  }, []);
   const path   = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
